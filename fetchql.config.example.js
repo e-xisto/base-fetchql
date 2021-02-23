@@ -1,16 +1,16 @@
 
 module.exports = {
     server: {
-        host: "HOSTNAME",
-        token: "TOKEN"
+        host: 'SERVER_HOSTNAME',
+        token: 'API_BEARER_TOKEN'
     },
     paths: {
-        input: "./PATH_TO_QUERIES_FILES",
-        output: "./PATH_TO_OUTPUT_FILES"
+        input: './PATH_TO_QUERIES_FILES',
+        output: './PATH_TO_OUTPUT_FILES'
     },
     env: {
-        VARIABLE1: ['VALUE1', 'VALUE2', '...'],
-        VARIABLE2: VALUE
+        iterableValue: ['Value1', 'Value2', '...'],
+        fixedValue: 'Value'
     }
 }
 
