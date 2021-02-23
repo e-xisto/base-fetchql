@@ -9,7 +9,7 @@ import { fetchQL } from './index';
 
 const program = new Command ();
 
-program.version ('0.0.1', '-v', 'Visualiza la versión actual');
+program.version ('0.0.2', '-v', 'Visualiza la versión actual');
 
 program.option ('-q, --query <FILE.gql...>', 'Ejecuta las consultas indicada, no es necesario indicar la extensión del fichero');
 

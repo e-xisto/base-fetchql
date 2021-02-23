@@ -1,6 +1,8 @@
 import { join } from 'path';
 import { readdir, readFile, createWriteStream } from 'fs';
 
+import { post } from './request';
+
 interface Config {
 	paths: {
 		input: string;
@@ -14,13 +16,12 @@ interface Config {
 	env: any;
 }
 
-import { post } from './request';
-
 interface Variable {
 	pattern: string;
 	values: Array <string | number >;
 	type: boolean;
 }
+
 type Variables = Record <string, Variable>;
 
 
@@ -42,14 +43,14 @@ function combinaciones (variables: Variables) {
 	let result: any = [];
 	for (let key in variables) {
 	  const values = variables [key].values;
-	  const all = [];
+	  const allValues = [];
 	  for (let i = 0; i < values.length; i++) {
 		for (let j = 0; j < (result.length || 1); j++) {
 		  const newResult: any = { ...result [j], [key]: values[i] };
-		  all.push (newResult);
+		  allValues.push (newResult);
 		}
 	  }
-	  result = all;
+	  result = allValues;
 	}
 	return result;
 }
@@ -99,7 +100,7 @@ function pageQuery (query: string, page: number = 0, pars: any, variables: Varia
 	if (params.hasOwnProperty ('page')) page = -1;
 	else parameters += `${ parameters ? ', ' : '' }page: ${ page }`;
 
-	parameters += `${ parameters ? ', ' : '' }perPage: ${ params.perPage ?? 100 }`;
+	// parameters += `${ parameters ? ', ' : '' }perPage: ${ params.perPage ?? 100 }`;
 
 	return {
 		query: query.substr (0, parsString.index) + parameters + query.substring ((parsString.index ?? 0) + parsString [0].length),
