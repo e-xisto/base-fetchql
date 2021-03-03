@@ -10,7 +10,9 @@
     "build": "tsc && chmod +x dist/cli.js",
     "dev": "tsc --watch"
   },
-  "keywords": ["graphql"],
+  "keywords": [
+    "graphql"
+  ],
   "author": "César E. García Algaba <cesar@existo.es> (https://www.existo.es)",
   "license": "MIT",
   "devDependencies": {

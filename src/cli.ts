@@ -20,10 +20,15 @@ program.command ('init')
 	.action ((options) => crearFicheroDeConfiguracion (options.force));
 
 
+program.command ('help')
+	.action (() => console.log (program.helpInformation ()));
+
 program.action (() => {
 
 	const options = program.opts ();
 
+	console.log ('xx');
+	console.log (options);
 	if (options.help) console.log (program.helpInformation ())
 	else if (options.query) fetchQL (options.query);
 	else fetchQL ();

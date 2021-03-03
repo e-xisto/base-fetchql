@@ -1,5 +1,9 @@
 # Changelog
 
+## Add
+- Añadir el comando help
+
+
 [0.0.2] - 2021-02-22
 
 ## Change
