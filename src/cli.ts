@@ -9,14 +9,14 @@ import { fetchQL } from './index';
 
 const program = new Command ();
 
-program.version ('0.0.1', '-v', 'Visualiza la versión actual');
+program.version ('0.0.1', '-v', 'Visualiza la versión actual.');
 
-program.option ('-q, --query <FILE.gql...>', 'Ejecuta las consultas indicada, no es necesario indicar la extensión del fichero');
+program.option ('-q, --query <FILE.gql...>', 'Ejecuta las consultas indicadas (no es necesario incluir la extensión del archivo).');
 
 
 program.command ('init')
-	.description ('Crea un fichero de configuración por defecto')
-	.option ('-f, --force', 'Fuerza la creación del fichero si ya existe')
+	.description ('Crea un archivo de configuración por defecto.')
+	.option ('-f, --force', 'Fuerza la creación del archivo de configuración si ya existe.')
 	.action ((options) => crearFicheroDeConfiguracion (options.force));
 
 
@@ -39,7 +39,7 @@ function crearFicheroDeConfiguracion (sobreescribir: boolean) {
 
 	try {
 		if (! sobreescribir && existsSync (join (process.cwd (), 'fetchql.config.js')))
-			return console.log ('Ya existe el fichero de configuración, use la opción --force para sobreescribirlo');
+			return console.log ('Ya existe el archivo de configuración, use la opción --force para sobreescribirlo.');
 
 		writeFileSync (
 			join (process.cwd (), 'fetchql.config.js'),
