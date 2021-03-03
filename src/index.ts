@@ -247,8 +247,8 @@ function validateQuery (query: string) {
 
 	const queries: Array <string> | null = query.match (/\w+\s*\([^\)]*\)/g)
 
-	if (! queries) throw new Error ('Tiene que indicar alguna query');
-	if (queries.length > 1) throw new Error ('De momemento solo admitimos una query');
+	if (! queries) throw new Error ('Es necesario indicar alguna Query.');
+	if (queries.length > 1) throw new Error ('Actualmente solo se admite una Query.');
 }
 
 
