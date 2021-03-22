@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 import { existsSync, readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
-
 import { Command } from 'commander';
 
 import { fetchQL } from './index';
@@ -9,7 +8,9 @@ import { fetchQL } from './index';
 
 const program = new Command ();
 
-program.version ('0.0.2', '-v', 'Visualiza la versión actual');
+
+program.version ('0.0.3', '-v', 'Visualiza la versión actual');
+
 
 program.option ('-q, --query <FILE.gql...>', 'Ejecuta las consultas indicadas (no es necesario incluir la extensión del archivo).');
 
@@ -28,15 +29,12 @@ program.action (() => {
 
 	const options = program.opts ();
 
-	console.log ('xx');
-	console.log (options);
 	if (options.help) console.log (program.helpInformation ())
 	else if (options.query) fetchQL (options.query);
 	else fetchQL ();
 });
 
 
-console.log ();
 program.parse (process.argv);
 console.log ();
 

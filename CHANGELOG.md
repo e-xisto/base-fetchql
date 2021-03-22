@@ -12,12 +12,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 
 - Añadir el comando help
+- Avisar cuando no exista el fichero de configuración
+- Avisar cuando no exista el path de entrada
+- Avisar si no existen consultas
+- Valida carpeta de salida
 
 ### Changed
 
 - Revisión de mensajes texto del CLI
 - Actualizado el archivo configuración de ejemplo
 
+### Fix
+
+-- Ejecutar queries sin parametros
 
 [0.0.2] - 2021-02-22
 

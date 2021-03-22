@@ -1,5 +1,5 @@
 import { join } from 'path';
-import { readdir, readFile, createWriteStream } from 'fs';
+import { readdir, readFile, createWriteStream, existsSync, mkdirSync } from 'fs';
 
 import { post } from './request';
 
@@ -27,13 +27,21 @@ type Variables = Record <string, Variable>;
 
 const fetchQL = async (queries: Array <string> | null = null) => {
 
-    try {
+	try {
 		const config = await importConfig ();
-		const queryFiles: Array <string> = await queryList (config, queries);
+		try {
+			const queryFiles: Array <string> = await queryList (config, queries);
 
-		queryFiles.forEach (item => runQuery (config, item).catch (err => console.error (err)));
+			if (! queryFiles.length) return console.log ('\x1b[35mNo se han encontrado consultas\n');
+			validateOutputFolder (config);
+			queryFiles.forEach (item => runQuery (config, item).catch (err => console.error (err)));
+		} catch (err) {
+			showErrors (err, config);
+		}
 	} catch (err) {
-		console.error (err);
+		if (err.code == 'MODULE_NOT_FOUND' && err.message.match (/fetchql\.config.js/)) {
+			console.log ('\x1b[35mNo se han encontrado el fichero de configuración fetchql.config\n');
+		} else console.error (err);
 	}
 }
 
@@ -99,8 +107,6 @@ function pageQuery (query: string, page: number = 0, pars: any, variables: Varia
 
 	if (params.hasOwnProperty ('page')) page = -1;
 	else parameters += `${ parameters ? ', ' : '' }page: ${ page }`;
-
-	// parameters += `${ parameters ? ', ' : '' }perPage: ${ params.perPage ?? 100 }`;
 
 	return {
 		query: query.substr (0, parsString.index) + parameters + query.substring ((parsString.index ?? 0) + parsString [0].length),
@@ -174,11 +180,10 @@ function queryVariables (config: Config, query: string): Variables {
 
 async function runQuery (config: Config, queryFile: string) {
 
-	const queryString: string = await getQuery (config, queryFile);
+	const queryString: string = validateQuery (await getQuery (config, queryFile));
 	const dataName = queryFile.replace ('.gql', '');
 	let index = 0;
 
-	validateQuery (queryString);
 	const stream = createWriteStream (join (config.rootPath, config.paths.output, dataName + '.json'));
 	stream.write ("[\n");
 
@@ -206,7 +211,11 @@ async function runQueryParameters (stream: any, config: Config, dataName: string
 		console.log (`Importando ${ dataName }, Página ${ page }, Pars: ${ JSON.stringify (pars) }`);
 
 		let { query, page: lastPage } = pageQuery (queryString, page, pars, variables);
+console.log (query);
 		if (! query) break;
+
+
+		console.log (query);
 
 		const data = await post (
 			config.server.host,
@@ -243,12 +252,23 @@ async function runQueryParameters (stream: any, config: Config, dataName: string
 }
 
 
+function validateOutputFolder (config: Config) {
+
+	const outputFolder = join (config.rootPath, config.paths.output);
+
+	if (! existsSync (outputFolder)) mkdirSync (outputFolder, { recursive: true });
+}
+
+
 function validateQuery (query: string) {
 
-	const queries: Array <string> | null = query.match (/\w+\s*\([^\)]*\)/g)
+	const queries: Array <string> | null = query.match (/query[^\{]*\{\s*\w+\s*(\([^\)]*\))?\s*\{/gi);
 
 	if (! queries) throw new Error ('Es necesario indicar alguna Query.');
 	if (queries.length > 1) throw new Error ('Actualmente solo se admite una Query.');
+
+	if (query.match (/query[^\{]*\{\s*\w+\s*\{/gi)) return query.replace (queries [0], queries [0].replace (/{$/, '() {'));
+	return query;
 }
 
 
@@ -261,4 +281,14 @@ export {
 //////////////////////////////////
 //////////////////////////////////
 //////////////////////////////////
+
+
+function showErrors (err: NodeJS.ErrnoException, config: Config) {
+
+	if (err.errno == -2 && err.code == 'ENOENT' && ! existsSync (join (process.cwd (), config?.paths.input))) {
+		console.error (`\x1b[1m\x1b[31m No existe el PATH de entrada: ${ config?.paths.input }\n`);
+	} else console.error (err);
+}
+
+
 
