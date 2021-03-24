@@ -11,11 +11,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
+- Añadir opción de plugins en fetchql.config.js
 - Añadir el comando help
 - Avisar cuando no exista el fichero de configuración
 - Avisar cuando no exista el path de entrada
 - Avisar si no existen consultas
 - Valida carpeta de salida
+- Crear la carpeta de salida
+
 
 ### Changed
 

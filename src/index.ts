@@ -13,7 +13,8 @@ interface Config {
 		host: string;
 		token: string;
 	};
-	env: any;
+	env: any,
+	plugins: Array <any> | undefined
 }
 
 interface Variable {
@@ -27,6 +28,8 @@ type Variables = Record <string, Variable>;
 
 const fetchQL = async (queries: Array <string> | null = null) => {
 
+	const promises: Array <Promise <any>> = [];
+
 	try {
 		const config = await importConfig ();
 		try {
@@ -34,7 +37,8 @@ const fetchQL = async (queries: Array <string> | null = null) => {
 
 			if (! queryFiles.length) return console.log ('\x1b[35mNo se han encontrado consultas\n');
 			validateOutputFolder (config);
-			queryFiles.forEach (item => runQuery (config, item).catch (err => console.error (err)));
+			queryFiles.forEach (item => promises.push (runQuery (config, item).catch (err => console.error (err))));
+			Promise.all (promises).then ((_: any) => config.plugins?.forEach (item => item (config)));
 		} catch (err) {
 			showErrors (err, config);
 		}
@@ -180,25 +184,27 @@ function queryVariables (config: Config, query: string): Variables {
 
 async function runQuery (config: Config, queryFile: string) {
 
-	const queryString: string = validateQuery (await getQuery (config, queryFile));
-	const dataName = queryFile.replace ('.gql', '');
-	let index = 0;
+	return new Promise (async (resolve, reject) => {
+		const queryString: string = validateQuery (await getQuery (config, queryFile));
+		const dataName = queryFile.replace ('.gql', '');
+		let index = 0;
 
-	const stream = createWriteStream (join (config.rootPath, config.paths.output, dataName + '.json'));
-	stream.write ("[\n");
+		const stream = createWriteStream (join (config.rootPath, config.paths.output, dataName + '.json'));
+		stream.write ("[\n");
 
-	const variables = queryVariables (config, queryString);
-	const valores = combinaciones (variables);
+		const variables = queryVariables (config, queryString);
+		const valores = combinaciones (variables);
 
-	if (valores.length) {
-		for (let pars of valores) {
-			if (index++) stream.write (",\n");
-			await runQueryParameters (stream, config, dataName, queryString, pars, variables);
-		}
-	} else await runQueryParameters (stream, config, dataName, queryString, {}, variables);
+		if (valores.length) {
+			for (let pars of valores) {
+				if (index++) stream.write (",\n");
+				await runQueryParameters (stream, config, dataName, queryString, pars, variables);
+			}
+		} else await runQueryParameters (stream, config, dataName, queryString, {}, variables);
 
-	stream.write ("\n]\n");
-	stream.end ();
+		stream.write ("\n]\n");
+		stream.end (() => resolve ({}));
+	});
 }
 
 
@@ -211,11 +217,7 @@ async function runQueryParameters (stream: any, config: Config, dataName: string
 		console.log (`Importando ${ dataName }, Página ${ page }, Pars: ${ JSON.stringify (pars) }`);
 
 		let { query, page: lastPage } = pageQuery (queryString, page, pars, variables);
-console.log (query);
 		if (! query) break;
-
-
-		console.log (query);
 
 		const data = await post (
 			config.server.host,
@@ -252,6 +254,14 @@ console.log (query);
 }
 
 
+function showErrors (err: NodeJS.ErrnoException, config: Config) {
+
+	if (err.errno == -2 && err.code == 'ENOENT' && ! existsSync (join (process.cwd (), config?.paths.input))) {
+		console.error (`\x1b[1m\x1b[31m No existe el PATH de entrada: ${ config?.paths.input }\n`);
+	} else console.error (err);
+}
+
+
 function validateOutputFolder (config: Config) {
 
 	const outputFolder = join (config.rootPath, config.paths.output);
@@ -281,14 +291,5 @@ export {
 //////////////////////////////////
 //////////////////////////////////
 //////////////////////////////////
-
-
-function showErrors (err: NodeJS.ErrnoException, config: Config) {
-
-	if (err.errno == -2 && err.code == 'ENOENT' && ! existsSync (join (process.cwd (), config?.paths.input))) {
-		console.error (`\x1b[1m\x1b[31m No existe el PATH de entrada: ${ config?.paths.input }\n`);
-	} else console.error (err);
-}
-
 
 
