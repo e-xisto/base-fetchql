@@ -1,5 +1,7 @@
 import { join } from 'path';
 import { readdir, readFile, createWriteStream, existsSync, mkdirSync } from 'fs';
+import matter, { GrayMatterFile } from 'gray-matter';
+
 
 import { post } from './request';
 
@@ -22,6 +24,7 @@ interface Variable {
 	values: Array <string | number >;
 	type: boolean;
 }
+
 
 type Variables = Record <string, Variable>;
 
@@ -68,12 +71,16 @@ function combinaciones (variables: Variables) {
 }
 
 
-function getQuery (config: Config, queryFile: string): Promise <string> {
+function getQuery (config: Config, queryFile: string): Promise <GrayMatterFile <string>> {
 
 	return new Promise ((resolve, reject) => {
 		readFile (join (config.rootPath, config.paths.input, queryFile), 'utf8', (err, data) => {
 			if (err) return reject (err);
-			return resolve (data);
+			const query = matter (data);
+
+			query.content = validateQuery (query.content);
+			query.data    = { pagination: true, ...query.data }
+			return resolve (query);
 		});
 	});
 }
@@ -95,10 +102,11 @@ function importConfig (): Promise <Config> {
 }
 
 
-function pageQuery (query: string, page: number = 0, pars: any, variables: Variables): {query: string, page: number } {
 
-	const { parsString, params } = queryParams (query);
-	if (! parsString) return { query: '', page: 0 };
+function pageQuery (query: GrayMatterFile <string>, page: number = 0, pars: any, variables: Variables): {queryQL: string, page: number } {
+
+	const { parsString, params } = queryParams (query.content);
+	if (! parsString) return { queryQL: '', page: 0 };
 	let parameters = parsString [0].trim ();
 
 	for (let variable in variables) {
@@ -110,10 +118,11 @@ function pageQuery (query: string, page: number = 0, pars: any, variables: Varia
 	}
 
 	if (params.hasOwnProperty ('page')) page = -1;
-	else parameters += `${ parameters ? ', ' : '' }page: ${ page }`;
+	else if (query.data.pagination) parameters += `${ parameters ? ', ' : '' }page: ${ page }`;
+	else page = -1;
 
 	return {
-		query: query.substr (0, parsString.index) + parameters + query.substring ((parsString.index ?? 0) + parsString [0].length),
+		queryQL: query.content.substr (0, parsString.index) + parameters + query.content.substring ((parsString.index ?? 0) + parsString [0].length),
 		page
 	}
 }
@@ -185,22 +194,23 @@ function queryVariables (config: Config, query: string): Variables {
 async function runQuery (config: Config, queryFile: string) {
 
 	return new Promise (async (resolve, reject) => {
-		const queryString: string = validateQuery (await getQuery (config, queryFile));
+
+		const query    = await getQuery (config, queryFile);
 		const dataName = queryFile.replace ('.gql', '');
 		let index = 0;
 
 		const stream = createWriteStream (join (config.rootPath, config.paths.output, dataName + '.json'));
 		stream.write ("[\n");
 
-		const variables = queryVariables (config, queryString);
+		const variables = queryVariables (config, query.content);
 		const valores = combinaciones (variables);
 
 		if (valores.length) {
 			for (let pars of valores) {
 				if (index++) stream.write (",\n");
-				await runQueryParameters (stream, config, dataName, queryString, pars, variables);
+				await runQueryParameters (stream, config, dataName, query, pars, variables);
 			}
-		} else await runQueryParameters (stream, config, dataName, queryString, {}, variables);
+		} else await runQueryParameters (stream, config, dataName, query, {}, variables);
 
 		stream.write ("\n]\n");
 		stream.end (() => resolve ({}));
@@ -208,7 +218,14 @@ async function runQuery (config: Config, queryFile: string) {
 }
 
 
-async function runQueryParameters (stream: any, config: Config, dataName: string, queryString: string, pars: any, variables: Variables) {
+async function runQueryParameters (
+	stream: any,
+	config: Config,
+	dataName: string,
+	query: GrayMatterFile <string>,
+	pars: any,
+	variables: Variables
+) {
 
 	let index = 0;
 	let page  = 1;
@@ -216,13 +233,13 @@ async function runQueryParameters (stream: any, config: Config, dataName: string
 	while (true) {
 		console.log (`Importando ${ dataName }, Página ${ page }, Pars: ${ JSON.stringify (pars) }`);
 
-		let { query, page: lastPage } = pageQuery (queryString, page, pars, variables);
-		if (! query) break;
+		let { queryQL, page: lastPage } = pageQuery (query, page, pars, variables);
+		if (! queryQL) break;
 
 		const data = await post (
 			config.server.host,
 			{
-				data: {query: query},
+				data: {query: queryQL},
 				headers: {
 					'Authorization': `Bearer ${ config.server.token }`
 				}
@@ -239,9 +256,7 @@ async function runQueryParameters (stream: any, config: Config, dataName: string
 
 			if (body.data [Object.keys (body.data) [0]].length) {
 				body.data [Object.keys (body.data) [0]].forEach ((item: any) => {
-					for (let par in pars) {
-						if (variables [par].values.length > 1) item [par] = pars [par];
-					}
+					for (let par in pars) item [par] = pars [par];
 					stream.write ((index++ ? ",\n" : '') + JSON.stringify (item));
 				});
 				if (lastPage == -1) break;
@@ -291,5 +306,3 @@ export {
 //////////////////////////////////
 //////////////////////////////////
 //////////////////////////////////
-
-

@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+
+[0.0.4] - 2021-04-08
+
+### Added
+- Se añade la variable pagination en el form-matter de la query para decir si lleva paginación o no.
+- Añadir gray-matter para añadir información a las consultas
+
+### Changed
+- Añade la variable de iteracción aunque solo tenga un valor.
+
+[0.0.3] - 2021-03-24
+
 ### Added
 
 - Añadir opción de plugins en fetchql.config.js
