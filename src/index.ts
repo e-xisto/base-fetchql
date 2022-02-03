@@ -1,32 +1,14 @@
 import { join } from 'path';
+import { readFileSync, writeFile } from 'fs';
 import { readdir, readFile, createWriteStream, existsSync, mkdirSync } from 'fs';
 import matter, { GrayMatterFile } from 'gray-matter';
 
-
 import { post } from './request';
 
-interface Config {
-	paths: {
-		input: string;
-		output: string;
-	}
-	rootPath: string;
-	server: {
-		host: string;
-		token: string;
-	};
-	env: any,
-	plugins: Array <any> | undefined
+
+interface Query extends GrayMatterFile <string> {
+	data: QueryData
 }
-
-interface Variable {
-	pattern: string;
-	values: Array <string | number >;
-	type: boolean;
-}
-
-
-type Variables = Record <string, Variable>;
 
 
 const fetchQL = async (queries: Array <string> | null = null) => {
@@ -35,20 +17,50 @@ const fetchQL = async (queries: Array <string> | null = null) => {
 
 	try {
 		const config = await importConfig ();
+
 		try {
 			const queryFiles: Array <string> = await queryList (config, queries);
 
-			if (! queryFiles.length) return console.log ('\x1b[35mNo se han encontrado consultas\n');
+			if (! queryFiles.length) return console.error ('\x1b[35mNo se han encontrado consultas\n');
 			validateOutputFolder (config);
 			queryFiles.forEach (item => promises.push (runQuery (config, item).catch (err => console.error (err))));
-			Promise.all (promises).then ((_: any) => config.plugins?.forEach (item => item (config)));
-		} catch (err) {
+			Promise.all (promises).then (
+				(_: any) => {
+					config.plugins?.forEach (
+						item => {
+							if (typeof item === 'object') return callFunction (config, item);
+							item (config)
+						}
+					)
+				}
+			);
+		} catch (err: any) { //ErrnoException
 			showErrors (err, config);
 		}
-	} catch (err) {
+	} catch (err: any) { // ErrnoException)
 		if (err.code == 'MODULE_NOT_FOUND' && err.message.match (/fetchql\.config.js/)) {
-			console.log ('\x1b[35mNo se han encontrado el fichero de configuración fetchql.config\n');
+			console.error ('\x1b[35mNo se han encontrado el fichero de configuración fetchql.config\n');
 		} else console.error (err);
+	}
+}
+
+
+function callFunction (config: Config, plugin: Plugin) {
+
+	const data: any = {};
+
+	for (let item of plugin.data) {
+		const json = readFileSync (join (config.rootPath, config.paths.output, `${ item }.json`)).toString ();
+		data [item] = json ? JSON.parse (json) : {};
+	};
+
+	const output = plugin.function (config, data);
+	if (plugin.output && output) {
+		writeFile (
+			join (config.rootPath, config.paths.output, `${ plugin.output }.json`),
+			JSON.stringify (output),
+			(err) => { if (err) console.error (err); }
+		);
 	}
 }
 
@@ -71,12 +83,12 @@ function combinaciones (variables: Variables) {
 }
 
 
-function getQuery (config: Config, queryFile: string): Promise <GrayMatterFile <string>> {
+function getQuery (config: Config, queryFile: string): Promise <Query> {
 
 	return new Promise ((resolve, reject) => {
 		readFile (join (config.rootPath, config.paths.input, queryFile), 'utf8', (err, data) => {
 			if (err) return reject (err);
-			const query = matter (data);
+			const query = <Query> matter (data);
 
 			query.content = validateQuery (query.content);
 			query.data    = { pagination: true, ...query.data }
@@ -103,7 +115,7 @@ function importConfig (): Promise <Config> {
 
 
 
-function pageQuery (query: GrayMatterFile <string>, page: number = 0, pars: any, variables: Variables): {queryQL: string, page: number } {
+function pageQuery (query: Query, page: number = 0, pars: any, variables: Variables): {queryQL: string, page: number } {
 
 	const { parsString, params } = queryParams (query.content);
 	if (! parsString) return { queryQL: '', page: 0 };
@@ -222,16 +234,18 @@ async function runQueryParameters (
 	stream: any,
 	config: Config,
 	dataName: string,
-	query: GrayMatterFile <string>,
+	query: Query,
 	pars: any,
 	variables: Variables
 ) {
 
 	let index = 0;
 	let page  = 1;
+	const json_pretty = query.data.json_pretty ?? config.queries [dataName]?.json_pretty ?? false;
+	const map = config.queries [dataName]?.map;
 
 	while (true) {
-		console.log (`Importando ${ dataName }, Página ${ page }, Pars: ${ JSON.stringify (pars) }`);
+		console.info (`Importando ${ dataName }, Página ${ page }, Pars: ${ JSON.stringify (pars) }`);
 
 		let { queryQL, page: lastPage } = pageQuery (query, page, pars, variables);
 		if (! queryQL) break;
@@ -257,7 +271,14 @@ async function runQueryParameters (
 			if (body.data [Object.keys (body.data) [0]].length) {
 				body.data [Object.keys (body.data) [0]].forEach ((item: any) => {
 					for (let par in pars) item [par] = pars [par];
-					stream.write ((index++ ? ",\n" : '') + JSON.stringify (item));
+					stream.write (index++ ? ",\n" : '');
+					stream.write (
+						JSON.stringify (
+							map ? map (item) : item,
+							null,
+							json_pretty ? 2 : 0
+						)
+					);
 				});
 				if (lastPage == -1) break;
 				page = ++lastPage;
@@ -306,3 +327,5 @@ export {
 //////////////////////////////////
 //////////////////////////////////
 //////////////////////////////////
+
+
