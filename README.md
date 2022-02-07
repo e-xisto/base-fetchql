@@ -23,8 +23,8 @@ module.exports = {
         token: "xhaTeZsdsOmI4G7jJdsd2fsZHEjHB0sdYHdrKCsjGHPvayXh_k7lvbPrPwvKUTle0oTO0tqTWM"
     },
     paths: {
-        input: "./api/queries",
-        output: "./src/_data/api"
+        input: "./queries",
+        output: "./data"
     },
     env: {
     	locale: ['ES', 'EN']
@@ -130,13 +130,75 @@ Opciones de configuración desde el Front Matter
 
 ## Plugins
 
-Mediante la configuración de plugins podemos automatizar procesos y manipular los datos resultado de nuestras consultas
+Mediante la configuración de plugins podemos automatizar procesos y manipular los datos resultado de nuestras consultas.
 
-Un plugin no es más que una función JavaScript que recibe datos y el contexto de configuración.
+Un plugin no es más que una función JavaScript que recibe el contexto de configuración de FetchQL y opcionalmente los datos de cualquiera de las consultas realizadas.
 
-Una vez finalizado el proceso de consulta y guardado de resultados en formato JSON, la librería FetchQL procederá a ejecutar los plugins definidos en nuestro archivo de configuración en el mismo orden en que se han definido.
+Cuando FetchQL finaliza el proceso de lanzar las consultas y de guardado de resultados en formato JSON, procederá a ejecutar los plugins definidos en nuestro archivo de configuración en el mismo orden en que se han definido.
 
-Existen 2 formas de declarar un plugin: Directa o Simplificada.
+Existen 2 formas diferentes de declarar la función de un plugin:
+
+### Declaración como función (Simplificada)
+
+En la mayoría de los casos utilizamos los plugins para combinar los datos recibidos de las diferentes consultas y construir un nuevo JSON que combina la información de la forma en que nos interesa.
+
+Para este caso de uso la forma más sencilla de crear un plugin es declarándolo como función. Esta es una manera simplificada de resolver el flujo de trabajo habitual para el procesado y la combinación los datos generados por nuestras consultas.
+
+Para declarar nuestro plugin como función añadiremos al Array de plugins de nuestro archivo de configuración un objeto de este tipo:
+
+```js
+const myFunction = require('myfunction.js')
+
+module.exports = {
+    server: {
+        host: "https://graphql.apirocket.io",
+        token: "xhaTeZsdsOmI4G7jJdsd2fsZHEjHB0sdYHdrKCsjGHPvayXh_k7lvbPrPwvKUTle0oTO0tqTWM"
+    },
+    paths: {
+        input: "./queries",
+        output: "./data"
+    },
+    env: {
+    	locale: ['ES', 'EN']
+    },
+    plugins: [
+        {
+            function: myFunction,
+            data: ['books', 'authors'],
+            output: 'catalog'
+        }    
+    ],
+    queries: {}
+}
+```
+
+El objeto se compone de 3 parámetros:
+
+| Parámetro | Tipo | Descripción |
+| --- | --- | --- | 
+| function | Function | Referencia a la función que ejecutaremos como plugin. Esta función debe ser declarada dentro del archivo de configuración o importada desde un archivo externo. |
+| data | Array | Este Array contendrá los nombres de las consultas con las que queremos trabajar en nuestro plugin. Deberán corresponderse con el nombre de algún archivo de consulta `.gql`. |
+| output | String | Nombre del archivo JSON en el que se guardarán los datos devueltos por la función del plugin a FetchQL. Este archivo se guardará dentro del directorio configurado como `output` en la configuración. |
+
+Como ejemplo, el archivo `myfunction.js` podría ser como este:
+
+```js
+module.exports = function myFunction(config, data) {
+    const books = data.books
+    const authors = data.authors
+
+    let catalog = []
+    
+    // Aquí podemos combinar y procesar los datos
+    
+    return catalog
+}
+```
+La estructura de nuestra función es muy sencilla.
+
+Como entrada la función recibirá 2 parámetros: `config` que contiene toda la configuración de FetchQL y `data` que almacena los datos de todas las colecciones declaradas en el Array `data` de nuestro plugin.
+
+Como respuesta nuestra función siempre devolverá un String con los datos que FetchQL guardará en formato JSON en un archivo con el nombre definido en el parámetro `output` de nuestro plugin.
 
 
 ## Queries
