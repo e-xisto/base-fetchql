@@ -130,7 +130,14 @@ Opciones de configuración desde el Front Matter
 
 ## Plugins
 
-(Pendiente) Definición de plugin y ejemplo 2 tipos de plugin
+Mediante la configuración de plugins podemos automatizar procesos y manipular los datos resultado de nuestras consultas
+
+Un plugin no es más que una función JavaScript que recibe datos y el contexto de configuración.
+
+Una vez finalizado el proceso de consulta y guardado de resultados en formato JSON, la librería FetchQL procederá a ejecutar los plugins definidos en nuestro archivo de configuración en el mismo orden en que se han definido.
+
+Existen 2 formas de declarar un plugin: Directa o Simplificada.
+
 
 ## Queries
 
