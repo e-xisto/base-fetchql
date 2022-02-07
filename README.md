@@ -41,9 +41,9 @@ Las opciones de configuración son las siguientes:
 | server.host | String | URL del servidor GraphQL al que se lanzarán las queries. |
 | server.token | String | Token de autenticación tipo Bearer a incluir en la cabecera de cada petición. |
 | paths.input | String | Ruta donde almacenamos los archivos de consulta GraphQL con extensión `.gql`. |
-| paths.output | String | Ruta donde se guardarán los archivos tipo JSON generados por las consultas. |
-| env | Object | Definición de las diferentes variables sobre las que iterar las consultas. Cada una de estas variables contendrá un Array con sus diferentes valores. |
-| plugins | Array | Los plugins son funciones que se ejecutan una vez finalizadas todas las consultas. Esto permite realizar tareas y procesos una vez dispongamos de los datos recibidos. |
+| paths.output | String | Ruta donde se guardarán los archivos de datos tipo JSON generados por las consultas. |
+| env | Object | Definición de las variables sobre las que iterar las consultas. Cada variable debe contener un Array con los diferentes valores que puede tener. |
+| plugins | Array | Los plugins son funciones que se ejecutan una vez finalizados los procesos de lanzar las consultas y guardardo de datos en JSON. Esto nos permitirá realizar tareas y procesos una vez FetchQL finalice su tarea. |
 | queries | Object | Opcionalmente podemos definir configuraciones específicas para cada query declarándolas en este objeto. |
 
 
@@ -184,6 +184,7 @@ Como ejemplo, el archivo `myfunction.js` podría ser como este:
 
 ```js
 module.exports = function myFunction(config, data) {
+
     const books = data.books
     const authors = data.authors
 
@@ -199,6 +200,58 @@ La estructura de nuestra función es muy sencilla.
 Como entrada la función recibirá 2 parámetros: `config` que contiene toda la configuración de FetchQL y `data` que almacena los datos de todas las colecciones declaradas en el Array `data` de nuestro plugin.
 
 Como respuesta nuestra función siempre devolverá un String con los datos que FetchQL guardará en formato JSON en un archivo con el nombre definido en el parámetro `output` de nuestro plugin.
+
+### Declaración directa (Estándar)
+
+Este es el método estándar para declarar un plugin y nos permite tener todo el control sobre el flujo de trabajo.
+
+En este caso para declarar nuestro plugin añadiremos a la configuración una llamada directamente a nuestra función:
+
+```js
+const myPlugin = require('myplugin.js')
+const myFunction = require('myfunction.js')
+
+module.exports = {
+    server: {
+        host: "https://graphql.apirocket.io",
+        token: "xhaTeZsdsOmI4G7jJdsd2fsZHEjHB0sdYHdrKCsjGHPvayXh_k7lvbPrPwvKUTle0oTO0tqTWM"
+    },
+    paths: {
+        input: "./queries",
+        output: "./data"
+    },
+    env: {
+    	locale: ['ES', 'EN']
+    },
+    plugins: [
+        myPlugin({}),
+        {
+            function: myFunction,
+            data: ['books', 'authors'],
+            output: 'catalog'
+        }    
+    ],
+    queries: {}
+}
+
+Como ejemplo, el archivo `myplugin.js` podría ser como este:
+
+```js
+module.exports = function myPlugin(options) {
+
+    const params = {};
+
+    return (config) => myFunction (config, {...options, ...params});
+}
+
+function myFunction (config, options) {
+    // Aquí podemos realizar las tareas necesarias
+}
+```
+
+Para este tipo de plugins la estructura de nuestra función es un poco más compleja. Tendremos que definir una función que reciba los parámetros declarados al configurar el plugin y que a su vez retorna nuestra función principal que invocamos pasándole como parámetros la configuración de FetchQL y las opciones que hemos definido en el plugin.
+
+En este caso nuestra función principal no tendrá que retornar ningun valor a FetchQL.
 
 
 ## Queries
