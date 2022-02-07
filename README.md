@@ -26,8 +26,8 @@ module.exports = {
         input: "./api/queries",
         output: "./src/_data/api"
     },
-  	env: {
-		  locale: ['ES', 'EN']
+    env: {
+    	locale: ['ES', 'EN']
     },
     plugins: [],
     queries: {}
@@ -53,7 +53,9 @@ Cuando ejecutamos FetchQL su primera tarea será buscar en el directorio `input`
 
 Estos archivos de consulta tendrán extensión `gql` y tendrán formato texto.
 
-Cada archivo incluira una única consulta GraphQL tipo `query`. El nombre de cada archivo será el que reciban los datos recibidos y que finalmente serán guardados en formato JSON en el directorio `output`.
+Cada archivo incluira una única consulta GraphQL tipo `query`.
+
+El nombre de cada archivo será el que reciban los datos recibidos y que finalmente serán guardados en formato JSON en el directorio `output`. Por ejemplo, si tenemos en nuestra carpeta `input` un archivo de consulta llamado `books.gql` esto nos generará en la carpeta `output` un archivo `books.json` con la respuesta en formato JSON.
 
 Ejemplo de archivo de consulta:
 
@@ -70,6 +72,30 @@ query {
 
 ### Variables de iteración
 
+Opcionalmente tenemos la posibilidad de definir variables que posteriormente podemos utilizar dentro de nuestros archivos de consulta.
+
+Las variables se declaran dentro del objeto `env` en nuestro archivo de configuración `fetchql.config.js` y se definen como un Array que contendrá los diferentes valores que esta puede tomar dentro de nuestra consulta.
+
+Para poder utilizar las variables dentro de nuestros archivos de consulta usaremos sintaxis tipo "mustache".
+
+En el ejemplo anterior utilizamos la variable `{{ locale }}`, definida previamente en nuestro archivo de configuración, para generar la iteración de la consulta. Esto nos generará 2 consultas, una por cada valor definido dentro del Array que define a la variable. En este caso lanzará una consulta con `locale = "ES"` y posteriormente volverá a repetir la consulta con `locale = "EN"`. El resultado de ambas consultas se concatenarán dentro del mismo archivo JSON de resultado.
+
+En el caso de utilizar diferentes variables dentro del mismo archivo de consulta, se realizará la iteración combinada de todas variables obteniendo un único archivo JSON que agrupa el resultado de todas las combinaciones posibles.
+
+Cuando utilizamos variables de iteración en nuestras consultas, los valores de estas varaibles son añadidos al modelo de datos del resultado. De esta forma, y siguiendo con el ejemplo anterior, al realizar la iteración se añadirá el valor de `locale` a cada uno de los resultados obtenidos.
+
+El resultado de nuestro ejemplo podría parecerse a algo como esto:
+
+
+```json
+[
+  {"title": "The Lord of the Rings", "image": {"url": "https://www.imgix.com" }, "locale": "ES"},
+  {"title": "The Name of the Rose", "image": {"url": "https://www.imgix.com" }, "locale": "ES"},
+  ...
+  {"title": "The Da Vinci Code", "image": {"url": "https://www.imgix.com" }, "locale": "EN"},
+  {"title": "The Alchemist", "image": {"url": "https://www.imgix.com" }, "locale": "EN"},
+]
+```
 
 ### Configuración mediante Front Matter
 
