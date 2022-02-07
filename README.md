@@ -99,6 +99,14 @@ El resultado de nuestro ejemplo podría parecerse a algo como esto:
 
 ### Configuración mediante Front Matter
 
+En nuestros archivos de consulta podemos definir configuraciones específicas y particulares de cada consulta.
+
+Para ello tendremos que añadir a nuestro archivo de consulta un bloque de metadatos estructurado de tipo Front Matter.
+
+Actualmente solo se contempla la opción `json_pretty` como parámetro configurable desde el Front Matter.
+
+Ejemplo:
+
 ```graphql
 ---
 json_pretty: true
@@ -112,6 +120,13 @@ query {
   }
 }
 ```
+
+Opciones de configuración desde el Front Matter
+
+| Propiedad | Tipo | Default | Descripción |
+| -- | -- | -- | -- |
+| json_pretty | Boolean | false | Cuando está activa se formatea el archivo JSON de resultado mediante tabulaciones y saltos de línea antes de ser guardado. |
+
 
 ## Plugins
 
