@@ -2,13 +2,19 @@
 
 Esta librería permite automatizar la generación de archivos de datos en formato JSON a partir de consultas GraphQL.
 
+<br>
 
 ## Instalación
 
 ```bash
 npm install @e-xisto/fetchql
 ```
+Una vez instalada la librería en nuestro repositorio podemos ejecutarla con el comando:
 
+```bash
+npx fetchql
+```
+<br>
 
 ## Configuración
 
@@ -46,6 +52,7 @@ Las opciones de configuración son las siguientes:
 | plugins | Array | Los plugins son funciones que se ejecutan una vez finalizados los procesos de consulta y guardardo de datos. Con ellos podemos realizar tareas una vez FetchQL finalice su trabajo. |
 | queries | Object | Opcionalmente podemos definir configuraciones específicas para cada query declarándolas en este objeto. |
 
+<br>
 
 ## Archivos de consulta GraphQL
 
@@ -69,12 +76,13 @@ query {
   }
 }
 ```
+<br>
 
 ### Variables de iteración
 
 Opcionalmente tenemos la posibilidad de definir variables que posteriormente podemos utilizar dentro de nuestros archivos de consulta.
 
-Las variables se declaran dentro del objeto `env` en nuestro archivo de configuración `fetchql.config.js` y se definen como un Array que contendrá los diferentes valores que esta puede tomar dentro de nuestra consulta.
+Las variables se declaran dentro del parámetro `env` en nuestro archivo de configuración `fetchql.config.js` y se definen como un String (valor fijo) o un Array que contenga los diferentes valores que esta puede tomar dentro de nuestra consulta (valor iterable).
 
 Para poder utilizar las variables dentro de nuestros archivos de consulta usaremos sintaxis tipo "mustache". Por ejemplo, si hemos definido una variable `locale` usaremos `{{ locale }}` para utilizar esta variable dentro de nuestra consulta.
 
@@ -96,6 +104,7 @@ El resultado de nuestro ejemplo podría parecerse a algo como esto:
   {"title": "The Alchemist", "image": {"url": "https://www.imgix.com" }, "locale": "EN"},
 ]
 ```
+<br>
 
 ### Configuración mediante Front Matter
 
@@ -127,6 +136,7 @@ Opciones de configuración desde el Front Matter
 | -- | -- | -- | -- |
 | json_pretty | Boolean | false | Cuando está activa se formatea el archivo JSON de resultado mediante tabulaciones y saltos de línea antes de ser guardado. |
 
+<br>
 
 ## Plugins
 
@@ -137,6 +147,8 @@ Un plugin no es más que una función JavaScript que recibe el contexto de confi
 Cuando FetchQL finaliza el proceso de lanzar las consultas y de guardado de datos, procederá a ejecutar los plugins definidos en nuestro archivo de configuración en el mismo orden en que se han declarado.
 
 Existen 2 formas diferentes de declarar un plugin:
+
+<br>
 
 ### Declaración como función (Simplificada)
 
@@ -199,7 +211,11 @@ La estructura de nuestra función es muy sencilla.
 
 Como entrada la función recibirá 2 parámetros: `config` que contiene toda la configuración de FetchQL y `data` que almacena los datos de todas las colecciones declaradas en el Array `data` de nuestro plugin.
 
-Como respuesta nuestra función siempre devolverá un String con los datos que FetchQL guardará en formato JSON en un archivo con el nombre definido en el parámetro `output` de nuestro plugin.
+Como respuesta nuestra función siempre devolverá un Objeto o Array con los datos que FetchQL guardará en formato JSON en un archivo con el nombre definido en el parámetro `output` de nuestro plugin.
+
+**Nota:** FetchQL se encarga de aplicar a la respuesta de nuestra función el comando `JSON.stringify()` para convertir nuestro Objeto o Array de datos a formato JSON.
+
+<br>
 
 ### Declaración directa (Estándar)
 
@@ -253,8 +269,51 @@ Para este tipo de plugins la estructura de nuestra función es un poco más comp
 
 En este caso nuestra función principal no tendrá que retornar ningun valor a FetchQL.
 
+<br>
 
 ## Queries
 
-(Pendiente) Opciones de configuración y función de mapeo
+Podemos definir configuraciones particulares para cada consulta en nuestro archivo de configuración.
 
+```js
+const mapBooks = require('mapbooks.js')
+
+module.exports = {
+    server: {
+        host: "https://graphql.apirocket.io",
+        token: "xhaTeZsdsOmI4G7jJdsd2fsZHEjHB0sdYHdrKCsjGHPvayXh_k7lvbPrPwvKUTle0oTO0tqTWM"
+    },
+    paths: {
+        input: "./queries",
+        output: "./data"
+    },
+    env: {},
+    plugins: [],
+    queries: {
+		books: {
+			json_pretty: true,
+			map: mapBooks
+		}
+	}
+}
+```
+Los parámetros de configuración de una query son los siguientes:
+
+| Parámetro | Tipo | Default | Descripción |
+| --- | --- | --- | --- | 
+| json_pretty | Boolean | false | Cuando está a `true` se formatea el archivo JSON de resultado mediante tabulaciones y saltos de línea antes de ser guardado. |
+| map | Function | none | Permite aplicar una función de mapeo a cada item o dato que conforma la colección. |
+
+Como ejemplo, el archivo `mapbooks.js` podría ser como este:
+
+```js
+module.exports = function mapBooks(item) {
+
+	item.date = Date()
+
+    return item
+}
+```
+Esta función recibe un único parámetro con el item o elemento o dato de nuestra consulta. 
+
+En nuestra función podemos realizar las modificaciones necesarias sobre el elemento y finalmente devolvemos el item o elemento modificado para que FetchQL lo guarde.
