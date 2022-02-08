@@ -298,13 +298,6 @@ module.exports = {
 	}
 }
 ```
-Los parámetros de configuración de una query son los siguientes:
-
-| Parámetro | Tipo | Default | Descripción |
-| --- | --- | --- | --- | 
-| json_pretty | Boolean | false | Cuando está a `true` se formatea el archivo JSON de resultado mediante tabulaciones y saltos de línea antes de ser guardado. |
-| map | Function | none | Permite aplicar una función de mapeo a cada item o dato que conforma la colección. |
-
 Como ejemplo, el archivo `mapbooks.js` podría ser como este:
 
 ```js
@@ -318,3 +311,12 @@ module.exports = function mapBooks(item) {
 Esta función recibe un único parámetro con el item o elemento o dato de nuestra consulta. 
 
 En nuestra función podemos realizar las modificaciones necesarias sobre el elemento y finalmente devolvemos el item o elemento modificado para que FetchQL lo guarde.
+
+
+Los parámetros de configuración de una query son los siguientes:
+
+| Parámetro | Tipo | Default | Descripción |
+| --- | --- | --- | --- | 
+| json_pretty | Boolean | false | Cuando está a `true` se formatea el archivo JSON de resultado mediante tabulaciones y saltos de línea antes de ser guardado. |
+| map | Function | none | Permite aplicar una función de mapeo a cada item o dato que conforma la colección. |
+
