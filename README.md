@@ -159,7 +159,7 @@ Para este caso de uso la forma más sencilla de crear un plugin es declarándolo
 Para declarar nuestro plugin como función añadiremos al Array de plugins de nuestro archivo de configuración un objeto de este tipo:
 
 ```js
-const myFunction = require('myfunction.js')
+const myFunction = require('./myfunction.js')
 
 module.exports = {
     server: {
@@ -224,8 +224,8 @@ Este es el método estándar para declarar un plugin y nos permite tener todo el
 En este caso para declarar nuestro plugin añadiremos a la configuración una llamada directamente a nuestra función:
 
 ```js
-const myPlugin = require('myplugin.js')
-const myFunction = require('myfunction.js')
+const myPlugin = require('./myplugin.js')
+const myFunction = require('./myfunction.js')
 
 module.exports = {
     server: {
@@ -277,7 +277,7 @@ En este caso nuestra función principal no tendrá que retornar ningun valor a F
 Podemos definir configuraciones particulares para cada consulta en nuestro archivo de configuración.
 
 ```js
-const mapBooks = require('mapbooks.js')
+const mapBooks = require('./mapbooks.js')
 
 module.exports = {
     server: {
@@ -291,11 +291,11 @@ module.exports = {
     env: {},
     plugins: [],
     queries: {
-		books: {
-			json_pretty: true,
-			map: mapBooks
-		}
+	books: {
+	    json_pretty: true,
+	    map: mapBooks
 	}
+    }
 }
 ```
 Como ejemplo, el archivo `mapbooks.js` podría ser como este:
@@ -303,7 +303,7 @@ Como ejemplo, el archivo `mapbooks.js` podría ser como este:
 ```js
 module.exports = function mapBooks(item) {
 
-	item.date = Date()
+    item.date = Date()
 
     return item
 }
