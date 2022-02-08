@@ -249,6 +249,7 @@ module.exports = {
     ],
     queries: {}
 }
+```
 
 Como ejemplo, el archivo `myplugin.js` podría ser como este:
 
