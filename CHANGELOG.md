@@ -11,6 +11,26 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 
 [0.1.0] - 2022-02-03
+
+### Add
+
+- Añadir json_pretty a la definción del plugin
+    `
+    plugins: [
+		traducciones({}),
+		cartas({}),
+        {
+            function: cesar,
+            data: ['cartas', 'chef'],
+            output: 'caracola',
+            json_pretty: true
+        }
+	]`
+- Convertir todas las llamadas al plugin asincronas.
+
+
+[0.1.0] - 2022-02-03
+
 ### Add
 - Se le cambia el nombre del paquete npm de base_fetchql a fetchql
 - Se añade la opción de crear un plugin como declaración de un objecto con las siguientes propiedades
@@ -37,6 +57,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - commander de 7.1.0 a 9.0.0
 - gray-matter de 4.0.2 a 4.0.3
 - typescript de 4.1.5 a 4.5.5
+
+
+[0.0.5] 2022-02-03
+
+### changed
+
+- Se cambia el nombre de la libreria por [@e-xisto/fetchql]: https://www.npmjs.com/package/@e-xisto/base-fetchql
+
 
 [0.0.4] - 2021-04-08
 

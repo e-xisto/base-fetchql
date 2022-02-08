@@ -25,13 +25,11 @@ const fetchQL = async (queries: Array <string> | null = null) => {
 			validateOutputFolder (config);
 			queryFiles.forEach (item => promises.push (runQuery (config, item).catch (err => console.error (err))));
 			Promise.all (promises).then (
-				(_: any) => {
-					config.plugins?.forEach (
-						item => {
-							if (typeof item === 'object') return callFunction (config, item);
-							item (config)
-						}
-					)
+				async (_: any) => {
+					if (! config.plugins) return;
+					for (let plugin of config.plugins) {
+						await callPlugin (config, plugin);
+					}
 				}
 			);
 		} catch (err: any) { //ErrnoException
@@ -45,7 +43,7 @@ const fetchQL = async (queries: Array <string> | null = null) => {
 }
 
 
-function callFunction (config: Config, plugin: Plugin) {
+async function callFunction (config: Config, plugin: PluginQLData) {
 
 	const data: any = {};
 
@@ -54,14 +52,26 @@ function callFunction (config: Config, plugin: Plugin) {
 		data [item] = json ? JSON.parse (json) : {};
 	};
 
-	const output = plugin.function (config, data);
+	const output = await plugin.function (config, data);
 	if (plugin.output && output) {
 		writeFile (
 			join (config.rootPath, config.paths.output, `${ plugin.output }.json`),
-			JSON.stringify (output),
+			JSON.stringify (
+				output,
+				null,
+				plugin?.json_pretty ? 2 : 0
+			),
 			(err) => { if (err) console.error (err); }
 		);
 	}
+	return void (0);
+}
+
+
+async function callPlugin (config: Config, plugin: PluginQL) {
+
+	if (typeof plugin == 'object') return await callFunction (config, plugin);
+	return await plugin (config);
 }
 
 
@@ -113,6 +123,31 @@ function importConfig (): Promise <Config> {
 	});
 }
 
+
+async function mapItemQuery (config: QueryDataConfig, item: any) {
+
+	if (! config?.map) return item;
+	return await config.map (item);
+}
+
+
+async function mapItemsQuery (stream: any, queryConfig: QueryDataConfig, query: Query, pars: any, body: any) {
+
+	let index = 0;
+	const json_pretty = query.data.json_pretty ?? queryConfig?.json_pretty ?? false;
+
+	for (let item of body.data [Object.keys (body.data) [0]]) {
+		for (let par in pars) item [par] = pars [par];
+		stream.write (index++ ? ",\n" : '');
+		stream.write (
+			JSON.stringify (
+				await mapItemQuery (queryConfig, item),
+				null,
+				json_pretty ? 2 : 0
+			)
+		);
+	}
+}
 
 
 function pageQuery (query: Query, page: number = 0, pars: any, variables: Variables): {queryQL: string, page: number } {
@@ -238,11 +273,7 @@ async function runQueryParameters (
 	pars: any,
 	variables: Variables
 ) {
-
-	let index = 0;
 	let page  = 1;
-	const json_pretty = query.data.json_pretty ?? config.queries [dataName]?.json_pretty ?? false;
-	const map = config.queries [dataName]?.map;
 
 	while (true) {
 		console.info (`Importando ${ dataName }, Página ${ page }, Pars: ${ JSON.stringify (pars) }`);
@@ -269,17 +300,7 @@ async function runQueryParameters (
 			}
 
 			if (body.data [Object.keys (body.data) [0]].length) {
-				body.data [Object.keys (body.data) [0]].forEach ((item: any) => {
-					for (let par in pars) item [par] = pars [par];
-					stream.write (index++ ? ",\n" : '');
-					stream.write (
-						JSON.stringify (
-							map ? map (item) : item,
-							null,
-							json_pretty ? 2 : 0
-						)
-					);
-				});
+				await mapItemsQuery (stream, config.queries [dataName], query, pars, body);
 				if (lastPage == -1) break;
 				page = ++lastPage;
 			} else break;

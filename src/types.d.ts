@@ -17,10 +17,14 @@ interface Config {
 }
 
 
-interface Plugin {
+type PluginQL = (config: Config) => void | PluginQLData;
+
+
+type PluginQLData = {
 	function: Function;
 	data: Array <string>;
 	output?: string;
+	json_pretty?: boolean;
 }
 
 
