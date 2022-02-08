@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Documentación básica dentro de README.md
 
 
-[0.1.0] - 2022-02-03
+[0.1.1] - 2022-02-03
 
 ### Add
 
@@ -30,7 +30,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
         }
 	]`
 - Convertir todas las llamadas al plugin asincronas.
+- Añadida documentacion README.md
 
+### Fix
+- Poner mensajes de error más claros.
 
 [0.1.0] - 2022-02-03
 

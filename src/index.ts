@@ -1,6 +1,5 @@
 import { join } from 'path';
-import { readFileSync, writeFile } from 'fs';
-import { readdir, readFile, createWriteStream, existsSync, mkdirSync } from 'fs';
+import { readFileSync, readdir, writeFile, readFile, createWriteStream, existsSync, mkdirSync } from 'fs';
 import matter, { GrayMatterFile } from 'gray-matter';
 
 import { post } from './request';
@@ -21,7 +20,7 @@ const fetchQL = async (queries: Array <string> | null = null) => {
 		try {
 			const queryFiles: Array <string> = await queryList (config, queries);
 
-			if (! queryFiles.length) return console.error ('\x1b[35mNo se han encontrado consultas\n');
+			if (! queryFiles.length) return console.error ('\x1b[35mNo se han encontrado consultas\x1b[0m\n');
 			validateOutputFolder (config);
 			queryFiles.forEach (item => promises.push (runQuery (config, item).catch (err => console.error (err))));
 			Promise.all (promises).then (
@@ -36,9 +35,8 @@ const fetchQL = async (queries: Array <string> | null = null) => {
 			showErrors (err, config);
 		}
 	} catch (err: any) { // ErrnoException)
-		if (err.code == 'MODULE_NOT_FOUND' && err.message.match (/fetchql\.config.js/)) {
-			console.error ('\x1b[35mNo se han encontrado el fichero de configuración fetchql.config\n');
-		} else console.error (err);
+		if (err.message) console.error (`\x1b[35m${ err.message }\x1b[0m\n`);
+		else console.error (err);
 	}
 }
 
@@ -113,6 +111,9 @@ function importConfig (): Promise <Config> {
 	return new Promise ((resolve, reject) => {
 
 		const rootPath = process.cwd ();
+
+		if (! existsSync (join (rootPath, '/fetchql.config.js')))
+			throw new Error (`No existe el fichero de configuración ${ join (rootPath, '/fetchql.config.js') }`);
 
 		import (join (rootPath, '/fetchql.config.js'))
 		.then ((config: any) => {
@@ -314,7 +315,7 @@ async function runQueryParameters (
 function showErrors (err: NodeJS.ErrnoException, config: Config) {
 
 	if (err.errno == -2 && err.code == 'ENOENT' && ! existsSync (join (process.cwd (), config?.paths.input))) {
-		console.error (`\x1b[1m\x1b[31m No existe el PATH de entrada: ${ config?.paths.input }\n`);
+		console.error (`\x1b[1m\x1b[31m No existe el PATH de entrada: ${ config?.paths.input }\x1b[0m\n`);
 	} else console.error (err);
 }
 
