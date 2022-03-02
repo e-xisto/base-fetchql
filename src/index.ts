@@ -132,14 +132,13 @@ async function mapItemQuery (config: QueryDataConfig, item: any) {
 }
 
 
-async function mapItemsQuery (stream: any, queryConfig: QueryDataConfig, query: Query, pars: any, body: any) {
+async function mapItemsQuery (stream: any, queryConfig: QueryDataConfig, query: Query, pars: any, body: any, iteration: number) {
 
-	let index = 0;
 	const json_pretty = query.data.json_pretty ?? queryConfig?.json_pretty ?? false;
 
 	for (let item of body.data [Object.keys (body.data) [0]]) {
 		for (let par in pars) item [par] = pars [par];
-		stream.write (index++ ? ",\n" : '');
+		stream.write (iteration++ ? ",\n" : '');
 		stream.write (
 			JSON.stringify (
 				await mapItemQuery (queryConfig, item),
@@ -275,6 +274,7 @@ async function runQueryParameters (
 	variables: Variables
 ) {
 	let page  = 1;
+	let iteration = 0;
 
 	while (true) {
 		console.info (`Importando ${ dataName }, Página ${ page }, Pars: ${ JSON.stringify (pars) }`);
@@ -293,18 +293,22 @@ async function runQueryParameters (
 		)
 
 		if (data.statusCode >= 200 && data.statusCode < 300) {
-			const body = JSON.parse (data.body);
+			try {
+				const body = JSON.parse (data.body);
 
-			if (body.errors) {
-				console.error (body.errors);
-				break;
+				if (body.errors) {
+					console.error (body.errors);
+					break;
+				}
+
+				if (body.data [Object.keys (body.data) [0]].length) {
+					await mapItemsQuery (stream, config?.queries?.[dataName], query, pars, body, iteration++);
+					if (lastPage == -1) break;
+					page = ++lastPage;
+				} else break;
+			} catch (err) {
+				console.error (err);
 			}
-
-			if (body.data [Object.keys (body.data) [0]].length) {
-				await mapItemsQuery (stream, config.queries [dataName], query, pars, body);
-				if (lastPage == -1) break;
-				page = ++lastPage;
-			} else break;
 		} else {
 			break;
 		}

@@ -9,8 +9,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+[0.1.2] - 2022-03-02
+
 ### Added
 - Documentación básica dentro de README.md
+
+### Fix
+- Error al crear el JSON cuando itera con más de dos variables
+- Error que si no está definido el queries en el config
 
 
 [0.1.1] - 2022-02-03
