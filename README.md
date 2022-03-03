@@ -14,11 +14,22 @@ Una vez instalada la librería en nuestro repositorio podemos ejecutarla con el 
 ```bash
 npx fetchql
 ```
+Existe la opción de ejecutar un comando de ayuda:
+
+```bash
+npx fetchql --help
+```
 <br>
 
 ## Configuración
 
 Para la configuración de la librería es necesario generar un archivo `fetchql.config.js` en el raiz del proyecto, justo donde se encuentra nuestro archivo `package.json`.
+
+Con el siguiente comando se genera un archivo `config.fetchql.js` por defecto:
+
+```bash
+npx fetchql init
+```
 
 A continuación mostramos un ejemplo de archivo de configuración:
 
@@ -46,6 +57,7 @@ Las opciones de configuración son las siguientes:
 | -- | -- | -- |
 | server.host | String | URL del servidor GraphQL. |
 | server.token | String | Token de autenticación tipo Bearer a incluir en la cabecera de cada petición. |
+| server.perPage | Number | Limita por defecto el número de resultados por página en cada consulta. |
 | paths.input | String | Ruta donde almacenamos los archivos de consulta GraphQL con extensión `.gql`. |
 | paths.output | String | Ruta donde se guardarán los archivos de datos tipo JSON generados por las consultas. |
 | env | Object | Definición de las variables sobre las que iterar las consultas. Cada variable debe contener un Array con los diferentes valores que puede adoptar. |
@@ -119,6 +131,7 @@ Ejemplo:
 ```graphql
 ---
 json_pretty: true
+perPage: 20
 ---
 query {
   AllBooks(locale: {{ locale }}, orderBy: CREATEDAT_DESC) {
@@ -135,6 +148,7 @@ Opciones de configuración desde el Front Matter
 | Propiedad | Tipo | Default | Descripción |
 | -- | -- | -- | -- |
 | json_pretty | Boolean | false | Cuando está activa se formatea el archivo JSON de resultado mediante tabulaciones y saltos de línea antes de ser guardado. |
+| perPage | Number | - | Limita el número de resultados por página en cada consulta. |
 
 <br>
 
@@ -293,6 +307,7 @@ module.exports = {
     queries: {
 		books: {
 			json_pretty: true,
+			perPage: 20,
 			map: mapBooks
 		}
 	}
@@ -318,5 +333,20 @@ Los parámetros de configuración de una query son los siguientes:
 | Parámetro | Tipo | Default | Descripción |
 | --- | --- | --- | --- | 
 | json_pretty | Boolean | false | Cuando está a `true` se formatea el archivo JSON de resultado mediante tabulaciones y saltos de línea antes de ser guardado. |
+| perPage | Number | - | Limita el número de resultados por página para esta consulta. |
 | map | Function | none | Permite aplicar una función de mapeo a cada item o dato que conforma la colección. |
+
+<br>
+
+### Prioridad en la definición de parámetros
+
+La prioridad de los parámetros definidos es la siguiente:
+
+1. Parámetro escrito directamente en el archivo de consulta Graphql.
+2. Parámetro definido en el Front Matter.
+3. Parámetro definido en `config.queries` para cada consulta.
+4. Parámetro definido de forma global en archivo de configuración`config.graphql.js`
+
+
+
 
