@@ -1,32 +1,13 @@
 import { join } from 'path';
-import { readdir, readFile, createWriteStream, existsSync, mkdirSync } from 'fs';
+import { readFileSync, readdir, writeFile, readFile, createWriteStream, existsSync, mkdirSync } from 'fs';
 import matter, { GrayMatterFile } from 'gray-matter';
-
 
 import { post } from './request';
 
-interface Config {
-	paths: {
-		input: string;
-		output: string;
-	}
-	rootPath: string;
-	server: {
-		host: string;
-		token: string;
-	};
-	env: any,
-	plugins: Array <any> | undefined
+
+interface Query extends GrayMatterFile <string> {
+	data: QueryData
 }
-
-interface Variable {
-	pattern: string;
-	values: Array <string | number >;
-	type: boolean;
-}
-
-
-type Variables = Record <string, Variable>;
 
 
 const fetchQL = async (queries: Array <string> | null = null) => {
@@ -35,21 +16,60 @@ const fetchQL = async (queries: Array <string> | null = null) => {
 
 	try {
 		const config = await importConfig ();
+
 		try {
 			const queryFiles: Array <string> = await queryList (config, queries);
 
-			if (! queryFiles.length) return console.log ('\x1b[35mNo se han encontrado consultas\n');
+			if (! queryFiles.length) return console.error ('\x1b[35mNo se han encontrado consultas\x1b[0m\n');
 			validateOutputFolder (config);
 			queryFiles.forEach (item => promises.push (runQuery (config, item).catch (err => console.error (err))));
-			Promise.all (promises).then ((_: any) => config.plugins?.forEach (item => item (config)));
-		} catch (err) {
+			Promise.all (promises).then (
+				async (_: any) => {
+					if (! config.plugins) return;
+					for (let plugin of config.plugins) {
+						await callPlugin (config, plugin);
+					}
+				}
+			);
+		} catch (err: any) { //ErrnoException
 			showErrors (err, config);
 		}
-	} catch (err) {
-		if (err.code == 'MODULE_NOT_FOUND' && err.message.match (/fetchql\.config.js/)) {
-			console.log ('\x1b[35mNo se han encontrado el fichero de configuración fetchql.config\n');
-		} else console.error (err);
+	} catch (err: any) { // ErrnoException)
+		if (err.message) console.error (`\x1b[35m${ err.message }\x1b[0m\n`);
+		else console.error (err);
 	}
+}
+
+
+async function callFunction (config: Config, plugin: PluginQLData) {
+
+	const data: any = {};
+
+	for (let item of plugin.data) {
+		const json = readFileSync (join (config.rootPath, config.paths.output, `${ item }.json`)).toString ();
+		data [item] = json ? JSON.parse (json) : {};
+	};
+
+	const output = await plugin.function (config, data);
+	if (plugin.output && output) {
+		writeFile (
+			join (config.rootPath, config.paths.output, `${ plugin.output }.json`),
+			JSON.stringify (
+				output,
+				null,
+				plugin?.json_pretty ? 2 : 0
+			),
+			(err) => { if (err) console.error (err); }
+		);
+	}
+	return void (0);
+}
+
+
+async function callPlugin (config: Config, plugin: PluginQL) {
+
+	if (typeof plugin == 'object') return await callFunction (config, plugin);
+	return await plugin (config);
 }
 
 
@@ -71,12 +91,12 @@ function combinaciones (variables: Variables) {
 }
 
 
-function getQuery (config: Config, queryFile: string): Promise <GrayMatterFile <string>> {
+function getQuery (config: Config, queryFile: string): Promise <Query> {
 
 	return new Promise ((resolve, reject) => {
 		readFile (join (config.rootPath, config.paths.input, queryFile), 'utf8', (err, data) => {
 			if (err) return reject (err);
-			const query = matter (data);
+			const query = <Query> matter (data);
 
 			query.content = validateQuery (query.content);
 			query.data    = { pagination: true, ...query.data }
@@ -92,6 +112,9 @@ function importConfig (): Promise <Config> {
 
 		const rootPath = process.cwd ();
 
+		if (! existsSync (join (rootPath, '/fetchql.config.js')))
+			throw new Error (`No existe el fichero de configuración ${ join (rootPath, '/fetchql.config.js') }`);
+
 		import (join (rootPath, '/fetchql.config.js'))
 		.then ((config: any) => {
 			config.rootPath = rootPath;
@@ -102,8 +125,32 @@ function importConfig (): Promise <Config> {
 }
 
 
+async function mapItemQuery (config: QueryDataConfig, item: any) {
 
-function pageQuery (query: GrayMatterFile <string>, page: number = 0, pars: any, variables: Variables): {queryQL: string, page: number } {
+	if (! config?.map) return item;
+	return await config.map (item);
+}
+
+
+async function mapItemsQuery (stream: any, queryConfig: QueryDataConfig, query: Query, pars: any, body: any, iteration: number) {
+
+	const json_pretty = query.data.json_pretty ?? queryConfig?.json_pretty ?? false;
+
+	for (let item of body.data [Object.keys (body.data) [0]]) {
+		for (let par in pars) item [par] = pars [par];
+		stream.write (iteration++ ? ",\n" : '');
+		stream.write (
+			JSON.stringify (
+				await mapItemQuery (queryConfig, item),
+				null,
+				json_pretty ? 2 : 0
+			)
+		);
+	}
+}
+
+
+function pageQuery (query: Query, page: number = 0, pars: any, variables: Variables): {queryQL: string, page: number } {
 
 	const { parsString, params } = queryParams (query.content);
 	if (! parsString) return { queryQL: '', page: 0 };
@@ -222,16 +269,15 @@ async function runQueryParameters (
 	stream: any,
 	config: Config,
 	dataName: string,
-	query: GrayMatterFile <string>,
+	query: Query,
 	pars: any,
 	variables: Variables
 ) {
-
-	let index = 0;
 	let page  = 1;
+	let iteration = 0;
 
 	while (true) {
-		console.log (`Importando ${ dataName }, Página ${ page }, Pars: ${ JSON.stringify (pars) }`);
+		console.info (`Importando ${ dataName }, Página ${ page }, Pars: ${ JSON.stringify (pars) }`);
 
 		let { queryQL, page: lastPage } = pageQuery (query, page, pars, variables);
 		if (! queryQL) break;
@@ -247,21 +293,22 @@ async function runQueryParameters (
 		)
 
 		if (data.statusCode >= 200 && data.statusCode < 300) {
-			const body = JSON.parse (data.body);
+			try {
+				const body = JSON.parse (data.body);
 
-			if (body.errors) {
-				console.error (body.errors);
-				break;
+				if (body.errors) {
+					console.error (body.errors);
+					break;
+				}
+
+				if (body.data [Object.keys (body.data) [0]].length) {
+					await mapItemsQuery (stream, config?.queries?.[dataName], query, pars, body, iteration++);
+					if (lastPage == -1) break;
+					page = ++lastPage;
+				} else break;
+			} catch (err) {
+				console.error (err);
 			}
-
-			if (body.data [Object.keys (body.data) [0]].length) {
-				body.data [Object.keys (body.data) [0]].forEach ((item: any) => {
-					for (let par in pars) item [par] = pars [par];
-					stream.write ((index++ ? ",\n" : '') + JSON.stringify (item));
-				});
-				if (lastPage == -1) break;
-				page = ++lastPage;
-			} else break;
 		} else {
 			break;
 		}
@@ -272,7 +319,7 @@ async function runQueryParameters (
 function showErrors (err: NodeJS.ErrnoException, config: Config) {
 
 	if (err.errno == -2 && err.code == 'ENOENT' && ! existsSync (join (process.cwd (), config?.paths.input))) {
-		console.error (`\x1b[1m\x1b[31m No existe el PATH de entrada: ${ config?.paths.input }\n`);
+		console.error (`\x1b[1m\x1b[31m No existe el PATH de entrada: ${ config?.paths.input }\x1b[0m\n`);
 	} else console.error (err);
 }
 
@@ -306,3 +353,5 @@ export {
 //////////////////////////////////
 //////////////////////////////////
 //////////////////////////////////
+
+

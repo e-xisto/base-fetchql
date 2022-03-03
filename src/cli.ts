@@ -22,28 +22,28 @@ program.command ('init')
 
 
 program.command ('help')
-	.action (() => console.log (program.helpInformation ()));
+	.action (() => console.info (program.helpInformation ()));
 
 
 program.action (() => {
 
 	const options = program.opts ();
 
-	if (options.help) console.log (program.helpInformation ())
+	if (options.help) console.info (program.helpInformation ())
 	else if (options.query) fetchQL (options.query);
 	else fetchQL ();
 });
 
 
 program.parse (process.argv);
-console.log ();
+console.info ();
 
 
 function crearFicheroDeConfiguracion (sobreescribir: boolean) {
 
 	try {
 		if (! sobreescribir && existsSync (join (process.cwd (), 'fetchql.config.js')))
-			return console.log ('Ya existe el archivo de configuración, use la opción --force para sobreescribirlo.');
+			return console.error ('Ya existe el archivo de configuración, use la opción --force para sobreescribirlo.');
 
 		writeFileSync (
 			join (process.cwd (), 'fetchql.config.js'),
