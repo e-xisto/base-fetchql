@@ -118,6 +118,11 @@ function importConfig (): Promise <Config> {
 		import (join (rootPath, '/fetchql.config.js'))
 		.then ((config: any) => {
 			config.rootPath = rootPath;
+			if (! config.server) throw new Error (`No existe el parámetro server en el fichero de configuración ${ join (rootPath, '/fetchql.config.js') }`);
+			if (! config.server.host) throw new Error (`No existe el parámetro server.host en el fichero de configuración ${ join (rootPath, '/fetchql.config.js') }`);
+			if (! config.paths) throw new Error (`No existe el parámetro paths en el fichero de configuración ${ join (rootPath, '/fetchql.config.js') }`);
+			if (! config.paths.input) throw new Error (`No existe el parámetro paths.input en el fichero de configuración ${ join (rootPath, '/fetchql.config.js') }`);
+			if (! config.paths.output) throw new Error (`No existe el parámetro paths.output en el fichero de configuración ${ join (rootPath, '/fetchql.config.js') }`);
 			return resolve (config);
 		})
 		.catch ((err: any) => reject (err));
@@ -125,14 +130,14 @@ function importConfig (): Promise <Config> {
 }
 
 
-async function mapItemQuery (config: QueryDataConfig, item: any) {
+async function mapItemQuery (config: QueryDataConfig | undefined, item: any) {
 
 	if (! config?.map) return item;
 	return await config.map (item);
 }
 
 
-async function mapItemsQuery (stream: any, queryConfig: QueryDataConfig, query: Query, pars: any, body: any, iteration: number) {
+async function mapItemsQuery (stream: any, queryConfig: QueryDataConfig | undefined, query: Query, pars: any, body: any, iteration: number) {
 
 	const json_pretty = query.data.json_pretty ?? queryConfig?.json_pretty ?? false;
 
@@ -150,9 +155,17 @@ async function mapItemsQuery (stream: any, queryConfig: QueryDataConfig, query: 
 }
 
 
-function pageQuery (query: Query, page: number = 0, pars: any, variables: Variables): {queryQL: string, page: number } {
+function pageQuery (
+	query: Query,
+	page: number = 0,
+	pars: any,
+	variables: Variables,
+	config: Config,
+	dataName: string
+): {queryQL: string, page: number } {
 
 	const { parsString, params } = queryParams (query.content);
+
 	if (! parsString) return { queryQL: '', page: 0 };
 	let parameters = parsString [0].trim ();
 
@@ -165,8 +178,15 @@ function pageQuery (query: Query, page: number = 0, pars: any, variables: Variab
 	}
 
 	if (params.hasOwnProperty ('page')) page = -1;
-	else if (query.data.pagination) parameters += `${ parameters ? ', ' : '' }page: ${ page }`;
-	else page = -1;
+	else if (query.data.pagination) {
+		const pars = [`page: ${ page }`];
+		if (params.perPage === undefined) {
+			if (query.data.perPage) pars.push (`perPage: ${ query.data.perPage }`);
+			else if (config?.queries?.[dataName]?.perPage) pars.push (`perPage: ${ config.queries [dataName].perPage }`);
+			else if (config.server?.perPage) pars.push (`perPage: ${ config.server.perPage }`);
+		}
+		parameters += `${ parameters ? ', ' : '' } ${ pars.join (',') }`;
+	} else page = -1;
 
 	return {
 		queryQL: query.content.substr (0, parsString.index) + parameters + query.content.substring ((parsString.index ?? 0) + parsString [0].length),
@@ -273,29 +293,29 @@ async function runQueryParameters (
 	pars: any,
 	variables: Variables
 ) {
-	let page  = 1;
+	let page      = 1;
 	let iteration = 0;
+	const headers: any = {};
+
+	if (config.server.token) headers ['Authorization'] = `Bearer ${ config.server.token }`;
 
 	while (true) {
 		console.info (`Importando ${ dataName }, Página ${ page }, Pars: ${ JSON.stringify (pars) }`);
 
-		let { queryQL, page: lastPage } = pageQuery (query, page, pars, variables);
+		let { queryQL, page: lastPage } = pageQuery (query, page, pars, variables, config, dataName);
 		if (! queryQL) break;
 
 		const data = await post (
 			config.server.host,
 			{
 				data: {query: queryQL},
-				headers: {
-					'Authorization': `Bearer ${ config.server.token }`
-				}
+				headers
 			}
 		)
 
 		if (data.statusCode >= 200 && data.statusCode < 300) {
 			try {
 				const body = JSON.parse (data.body);
-
 				if (body.errors) {
 					console.error (body.errors);
 					break;

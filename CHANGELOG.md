@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+[0.1.3] - 2022-03-03
+
+### Added
+- Se añade el parameto perPage en la query en el matter, en config.queries y en config server con esa prioridad.
+
+### Fix
+- Se validan el parametro server y paths de configuracion
+
 [0.1.2] - 2022-03-02
 
 ### Added

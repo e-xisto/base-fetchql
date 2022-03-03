@@ -7,11 +7,12 @@ interface Config {
 	rootPath: string;
 	server: {
 		host: string;
-		token: string;
+		token?: string;
+		perPage?: number;
 	};
-	env: any,
-	plugins: Array <any> | undefined,
-    queries: {
+	env?: any,
+	plugins?: Array <any> | undefined,
+    queries?: {
         [index: string]: QueryDataConfig
     }
 }
@@ -31,6 +32,7 @@ type PluginQLData = {
 interface QueryData {
 	json_pretty?: boolean;
 	pagination?: boolean;
+	perPage?: number;
 }
 
 
