@@ -191,7 +191,8 @@ module.exports = {
         {
             function: myFunction,
             data: ['books', 'authors'],
-            output: 'catalog'
+            output: 'catalog',
+			json_pretty: true
         }    
     ],
     queries: {}
@@ -205,6 +206,7 @@ El objeto se compone de 3 parámetros:
 | function | Function | Referencia a la función que ejecutaremos como plugin. Esta función debe ser declarada dentro del archivo de configuración o importada desde un archivo externo. |
 | data | Array | Este Array contendrá los nombres de las consultas con las que queremos trabajar en nuestro plugin. Deberán corresponderse con el nombre de algún archivo de consulta `.gql`. |
 | output | String | Nombre del archivo JSON en el que se guardarán los datos devueltos por la función del plugin a FetchQL. Este archivo se guardará dentro del directorio configurado como `output` en la configuración. |
+| json_pretty | Boolean | Cuando está a `true` se formatea el archivo JSON de resultado mediante tabulaciones y saltos de línea antes de ser guardado. |
 
 Como ejemplo, el archivo `myfunction.js` podría ser como este:
 
@@ -239,7 +241,6 @@ En este caso para declarar nuestro plugin añadiremos a la configuración una ll
 
 ```js
 const myPlugin = require('./myplugin.js')
-const myFunction = require('./myfunction.js')
 
 module.exports = {
     server: {
@@ -254,12 +255,7 @@ module.exports = {
     	locale: ['ES', 'EN']
     },
     plugins: [
-        myPlugin({}),
-        {
-            function: myFunction,
-            data: ['books', 'authors'],
-            output: 'catalog'
-        }    
+        myPlugin({})
     ],
     queries: {}
 }
