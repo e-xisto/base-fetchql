@@ -23,6 +23,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fix
 - Se validan el parametro server y paths de configuracion
+### Changed
+- Actualización de la documentación
+
+
 
 [0.1.2] - 2022-03-02
 
