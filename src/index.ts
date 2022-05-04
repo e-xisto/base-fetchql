@@ -1,5 +1,5 @@
 import { join } from 'path';
-import { readFileSync, readdir, writeFile, readFile, createWriteStream, existsSync, mkdirSync } from 'fs';
+import { readFileSync, readdir, writeFile, readFile, createWriteStream, existsSync, mkdirSync, writeFileSync } from 'fs';
 import matter, { GrayMatterFile } from 'gray-matter';
 
 import { post } from './request';
@@ -52,14 +52,13 @@ async function callFunction (config: Config, plugin: PluginQLData) {
 
 	const output = await plugin.function (config, data);
 	if (plugin.output && output) {
-		writeFile (
+		writeFileSync (
 			join (config.rootPath, config.paths.output, `${ plugin.output }.json`),
 			JSON.stringify (
 				output,
 				null,
 				plugin?.json_pretty ? 2 : 0
-			),
-			(err) => { if (err) console.error (err); }
+			)
 		);
 	}
 	return void (0);

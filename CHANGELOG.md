@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+[0.1.5] - 2022-05-04
+
+### Fix
+- Escritura de plugins sincrona
+
+[0.1.4] - 2022-03-03
+
 [0.1.3] - 2022-03-03
 
 ### Added
