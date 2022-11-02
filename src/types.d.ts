@@ -6,9 +6,10 @@ interface Config {
 	}
 	rootPath: string;
 	server: {
+		debug?: boolean;
 		host: string;
-		token?: string;
 		perPage?: number;
+		token?: string;
 	};
 	env?: any,
 	plugins?: Array <any> | undefined,

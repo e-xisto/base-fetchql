@@ -266,6 +266,7 @@ async function runQuery (config: Config, queryFile: string) {
 		let index = 0;
 
 		const stream = createWriteStream (join (config.rootPath, config.paths.output, dataName + '.json'));
+		const log    = config.server.debug ? createWriteStream (join (config.rootPath, config.paths.output, dataName + '.log')) : undefined;
 		stream.write ("[\n");
 
 		const variables = queryVariables (config, query.content);
@@ -274,9 +275,9 @@ async function runQuery (config: Config, queryFile: string) {
 		if (valores.length) {
 			for (let pars of valores) {
 				if (index++) stream.write (",\n");
-				await runQueryParameters (stream, config, dataName, query, pars, variables);
+				await runQueryParameters (stream, config, dataName, query, pars, variables, log);
 			}
-		} else await runQueryParameters (stream, config, dataName, query, {}, variables);
+		} else await runQueryParameters (stream, config, dataName, query, {}, variables, log);
 
 		stream.write ("\n]\n");
 		stream.end (() => resolve ({}));
@@ -290,7 +291,8 @@ async function runQueryParameters (
 	dataName: string,
 	query: Query,
 	pars: any,
-	variables: Variables
+	variables: Variables,
+	log: any
 ) {
 	let page      = 1;
 	let iteration = 0;
@@ -303,6 +305,8 @@ async function runQueryParameters (
 
 		let { queryQL, page: lastPage } = pageQuery (query, page, pars, variables, config, dataName);
 		if (! queryQL) break;
+
+		if (log) log.write (queryQL + "\n\n");
 
 		const data = await post (
 			config.server.host,

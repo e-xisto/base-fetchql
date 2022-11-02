@@ -1,9 +1,10 @@
 
 module.exports = {
     server: {
+        debug: false,
         host: 'SERVER_HOSTNAME',
-        token: 'API_BEARER_TOKEN',
-        perPage: 100
+        perPage: 100,
+        token: 'API_BEARER_TOKEN'
     },
     paths: {
         input: './PATH_TO_QUERIES_FILES',
