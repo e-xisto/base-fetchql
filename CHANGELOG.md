@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+[0.1.6] - 2022-11-02
+
+### Added
+
+- Se añade el la variable de configuración server.debug para hacer un log de las queries que se lanzan
+
 [0.1.5] - 2022-05-04
 
 ### Fix
