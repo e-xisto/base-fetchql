@@ -1,5 +1,5 @@
 
-module.exports = {
+export const config = {
     server: {
         debug: false,
         host: 'SERVER_HOSTNAME',
