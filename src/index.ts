@@ -115,8 +115,8 @@ function importConfig (): Promise <Config> {
 			throw new Error (`No existe el fichero de configuración ${ join (rootPath, '/fetchql.config.js') }`);
 
 		import (join (rootPath, '/fetchql.config.js'))
-		.then ((config: any) => {
-			config.rootPath = rootPath;
+		.then ((module: any) => {
+			const config = <Config> {...module.config, rootPath };
 			if (! config.server) throw new Error (`No existe el parámetro server en el fichero de configuración ${ join (rootPath, '/fetchql.config.js') }`);
 			if (! config.server.host) throw new Error (`No existe el parámetro server.host en el fichero de configuración ${ join (rootPath, '/fetchql.config.js') }`);
 			if (! config.paths) throw new Error (`No existe el parámetro paths en el fichero de configuración ${ join (rootPath, '/fetchql.config.js') }`);

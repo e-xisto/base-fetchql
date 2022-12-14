@@ -9,7 +9,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-[0.2.0] - Compilación como módulo
+[0.2.1] - 2022-12-12
+
+ - Error en la carga de configuración
+ - El fichero de configuración debe exportar una variable config
+
+[0.2.0] - 2022-12-12
+
+- Compilación como módulo
 
 [0.1.6] - 2022-11-02
 

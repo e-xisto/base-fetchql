@@ -38,7 +38,6 @@ program.action (() => {
 program.parse (process.argv);
 console.info ();
 
-
 function crearFicheroDeConfiguracion (sobreescribir: boolean) {
 
 	try {
