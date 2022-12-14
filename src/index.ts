@@ -2,7 +2,7 @@ import { join } from 'path';
 import { readFileSync, readdir, writeFile, readFile, createWriteStream, existsSync, mkdirSync, writeFileSync } from 'fs';
 import matter, { GrayMatterFile } from 'gray-matter';
 
-import { post } from './request';
+import { post } from './request.js';
 
 
 interface Query extends GrayMatterFile <string> {
@@ -376,5 +376,8 @@ export {
 //////////////////////////////////
 //////////////////////////////////
 //////////////////////////////////
+
+
+// const dynamicImport = new Function('specifier', 'return import(specifier)');
 
 

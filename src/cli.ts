@@ -3,7 +3,7 @@ import { existsSync, readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { Command } from 'commander';
 
-import { fetchQL } from './index';
+import { fetchQL } from './index.js';
 
 
 const program = new Command ();
@@ -18,7 +18,7 @@ program.option ('-q, --query <FILE.gql...>', 'Ejecuta las consultas indicadas (n
 program.command ('init')
 	.description ('Crea un archivo de configuración por defecto.')
 	.option ('-f, --force', 'Fuerza la creación del archivo de configuración si ya existe.')
-	.action ((options) => crearFicheroDeConfiguracion (options.force));
+	.action ((options: any) => crearFicheroDeConfiguracion (options.force));
 
 
 program.command ('help')

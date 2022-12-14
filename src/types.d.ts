@@ -50,3 +50,5 @@ interface Variable {
 
 
 type Variables = Record <string, Variable>;
+
+declare module 'commander';
