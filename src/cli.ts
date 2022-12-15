@@ -9,9 +9,9 @@ import { fetchQL } from './index.js';
 const program = new Command ();
 
 
-program.version ('0.0.3', '-v', 'Visualiza la versión actual');
+program.version ('0.2.2', '-v', 'Visualiza la versión actual');
 
-
+program.option ('-c, --config <FILE_CONFIG>', 'Carga el fichero de configuración indicado).');
 program.option ('-q, --query <FILE.gql...>', 'Ejecuta las consultas indicadas (no es necesario incluir la extensión del archivo).');
 
 
@@ -27,11 +27,15 @@ program.command ('help')
 
 program.action (() => {
 
-	const options = program.opts ();
+	const options  = program.opts ();
+	const rootPath = process.cwd ();
 
-	if (options.help) console.info (program.helpInformation ())
-	else if (options.query) fetchQL (options.query);
-	else fetchQL ();
+	const configFile = options.config ? options.config : join (rootPath, '/fetchql.config.js');
+	const query      = options.query ? options.query : undefined;
+
+
+	if (options.help) return console.info (program.helpInformation ())
+	fetchQL (configFile, query);
 });
 
 

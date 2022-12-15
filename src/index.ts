@@ -10,12 +10,12 @@ interface Query extends GrayMatterFile <string> {
 }
 
 
-const fetchQL = async (queries: Array <string> | null = null) => {
+const fetchQL = async (configFile: string, queries: Array <string> | undefined) => {
 
 	const promises: Array <Promise <any>> = [];
 
 	try {
-		const config = await importConfig ();
+		const config = await importConfig (configFile);
 
 		try {
 			const queryFiles: Array <string> = await queryList (config, queries);
@@ -105,16 +105,16 @@ function getQuery (config: Config, queryFile: string): Promise <Query> {
 }
 
 
-function importConfig (): Promise <Config> {
+function importConfig (configFile: string): Promise <Config> {
 
 	return new Promise ((resolve, reject) => {
 
 		const rootPath = process.cwd ();
 
-		if (! existsSync (join (rootPath, '/fetchql.config.js')))
+		if (! existsSync (configFile))
 			throw new Error (`No existe el fichero de configuración ${ join (rootPath, '/fetchql.config.js') }`);
 
-		import (join (rootPath, '/fetchql.config.js'))
+		import (configFile)
 		.then ((module: any) => {
 			const config = <Config> {...module.config, rootPath };
 			if (! config.server) throw new Error (`No existe el parámetro server en el fichero de configuración ${ join (rootPath, '/fetchql.config.js') }`);
@@ -200,7 +200,7 @@ function pathQuery (config: Config) {
 }
 
 
-function queryList (config: Config, queries: Array <string> | null): Promise <Array <string>> {
+function queryList (config: Config, queries: Array <string> | undefined): Promise <Array <string>> {
 
 	return new Promise ((resolve, reject) => {
 
