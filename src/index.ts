@@ -1,5 +1,5 @@
 import { join } from 'path';
-import { readFileSync, readdir, writeFile, readFile, createWriteStream, existsSync, mkdirSync, writeFileSync } from 'fs';
+import { readFileSync, readdir, readFile, createWriteStream, existsSync, mkdirSync, writeFileSync } from 'fs';
 import matter, { GrayMatterFile } from 'gray-matter';
 
 import { post } from './request.js';
@@ -324,7 +324,10 @@ async function runQueryParameters (
 					break;
 				}
 
-				if (body.data [Object.keys (body.data) [0]].length) {
+				// De momento solo una consulta
+				const key = Object.keys (body.data) [0];
+				if (! Array.isArray (body.data [key])) body.data [key] = [ body.data [key]]
+				if (body.data [key].length) {
 					await mapItemsQuery (stream, config?.queries?.[dataName], query, pars, body, iteration++);
 					if (lastPage == -1) break;
 					page = ++lastPage;

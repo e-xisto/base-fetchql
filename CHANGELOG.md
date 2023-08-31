@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+[0.2.6] - 2023-08-31
+
+- Tipo contenido forzar a array para gerar JSON.
+
 [0.2.5] - 2023-08-31
 
 - Se actualiza la documentación
