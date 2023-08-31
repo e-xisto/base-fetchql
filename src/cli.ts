@@ -30,7 +30,7 @@ program.action (() => {
 	const options  = program.opts ();
 	const rootPath = process.cwd ();
 
-	const configFile = options.config ? options.config : join (rootPath, '/fetchql.config.js');
+	const configFile = options.config ? join (rootPath, options.config) : join (rootPath, '/fetchql.config.js');
 	const query      = options.query ? options.query : undefined;
 
 
@@ -41,6 +41,7 @@ program.action (() => {
 
 program.parse (process.argv);
 console.info ();
+
 
 function crearFicheroDeConfiguracion (sobreescribir: boolean) {
 

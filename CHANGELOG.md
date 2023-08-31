@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+[0.2.5] - 2023-08-31
+
+- Se actualiza la documentación
+
 [0.2.2] - 2022-12-15
 
  - Añadir parametro -c --config para indicar el fichero de configuración (Opcional)

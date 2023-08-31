@@ -112,7 +112,7 @@ function importConfig (configFile: string): Promise <Config> {
 		const rootPath = process.cwd ();
 
 		if (! existsSync (configFile))
-			throw new Error (`No existe el fichero de configuración ${ join (rootPath, '/fetchql.config.js') }`);
+			throw new Error (`No existe el fichero de configuración ${ configFile }`);
 
 		import (configFile)
 		.then ((module: any) => {
@@ -124,7 +124,7 @@ function importConfig (configFile: string): Promise <Config> {
 			if (! config.paths.output) throw new Error (`No existe el parámetro paths.output en el fichero de configuración ${ join (rootPath, '/fetchql.config.js') }`);
 			return resolve (config);
 		})
-		.catch ((err: any) => reject (err));
+		.catch ((err: any) => reject (err) );
 	});
 }
 

@@ -132,6 +132,7 @@ Ejemplo:
 ---
 json_pretty: true
 perPage: 20
+pagination: false
 ---
 query {
   AllBooks(locale: {{ locale }}, orderBy: CREATEDAT_DESC) {
@@ -207,6 +208,7 @@ El objeto se compone de 3 parámetros:
 | data | Array | Este Array contendrá los nombres de las consultas con las que queremos trabajar en nuestro plugin. Deberán corresponderse con el nombre de algún archivo de consulta `.gql`. |
 | output | String | Nombre del archivo JSON en el que se guardarán los datos devueltos por la función del plugin a FetchQL. Este archivo se guardará dentro del directorio configurado como `output` en la configuración. |
 | json_pretty | Boolean | Cuando está a `true` se formatea el archivo JSON de resultado mediante tabulaciones y saltos de línea antes de ser guardado. |
+| pagination | Boolean | Cuando está a `false` la query no se pagina. |
 
 Como ejemplo, el archivo `myfunction.js` podría ser como este:
 
