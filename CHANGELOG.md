@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+[0.2.8] - 2024-01-15
+
+- Error en colección contenido cuando no tiene parametros
+
 [0.2.7] - 2023-11-27
 
 - Error si la consulta no tiene paginación ni parametros

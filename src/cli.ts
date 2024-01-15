@@ -33,7 +33,6 @@ program.action (() => {
 	const configFile = options.config ? join (rootPath, options.config) : join (rootPath, '/fetchql.config.js');
 	const query      = options.query ? options.query : undefined;
 
-
 	if (options.help) return console.info (program.helpInformation ())
 	fetchQL (configFile, query);
 });

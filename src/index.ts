@@ -166,7 +166,7 @@ function pageQuery (
 
 	const { parsString, params } = queryParams (query.content);
 
-	if (! parsString) return { queryQL: '', page: 0 };
+	if (! parsString) return { queryQL: query.content, page: -1 };
 	let parameters = parsString [0].trim ();
 
 	for (let variable in variables) {
@@ -263,7 +263,6 @@ async function runQuery (config: Config, queryFile: string) {
 	return new Promise (async (resolve, reject) => {
 
 		const query    = await getQuery (config, queryFile);
-
 		const dataName = queryFile.replace ('.gql', '');
 		let index = 0;
 
@@ -306,6 +305,7 @@ async function runQueryParameters (
 		console.info (`Importando ${ dataName }, Página ${ page }, Pars: ${ JSON.stringify (pars) }`);
 
 		let { queryQL, page: lastPage } = pageQuery (query, page, pars, variables, config, dataName);
+
 		if (! queryQL) break;
 
 		if (log) log.write (queryQL + "\n\n");
