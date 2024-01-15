@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+[0.2.7] - 2023-11-27
+
+- Error si la consulta no tiene paginación ni parametros
+
 [0.2.6] - 2023-08-31
 
 - Tipo contenido forzar a array para gerar JSON.

@@ -1,6 +1,6 @@
 {
   "name": "@e-xisto/fetchql",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "description": "Crea Ficheros de datos a partir de consultas GraphQL",
   "main": "./dist/index.js",
   "type": "module",

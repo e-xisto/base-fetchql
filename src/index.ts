@@ -95,10 +95,11 @@ function getQuery (config: Config, queryFile: string): Promise <Query> {
 	return new Promise ((resolve, reject) => {
 		readFile (join (config.rootPath, config.paths.input, queryFile), 'utf8', (err, data) => {
 			if (err) return reject (err);
+
 			const query = <Query> matter (data);
 
-			query.content = validateQuery (query.content);
 			query.data    = { pagination: true, ...query.data }
+			query.content = validateQuery (query.content, query.data);
 			return resolve (query);
 		});
 	});
@@ -262,6 +263,7 @@ async function runQuery (config: Config, queryFile: string) {
 	return new Promise (async (resolve, reject) => {
 
 		const query    = await getQuery (config, queryFile);
+
 		const dataName = queryFile.replace ('.gql', '');
 		let index = 0;
 
@@ -358,15 +360,17 @@ function validateOutputFolder (config: Config) {
 }
 
 
-function validateQuery (query: string) {
+function validateQuery (content: string, data: QueryData) {
 
-	const queries: Array <string> | null = query.match (/query[^\{]*\{\s*\w+\s*(\([^\)]*\))?\s*\{/gi);
+	const queries: Array <string> | null = content.match (/query[^\{]*\{\s*\w+\s*(\([^\)]*\))?\s*\{/gi);
 
 	if (! queries) throw new Error ('Es necesario indicar alguna Query.');
 	if (queries.length > 1) throw new Error ('Actualmente solo se admite una Query.');
 
-	if (query.match (/query[^\{]*\{\s*\w+\s*\{/gi)) return query.replace (queries [0], queries [0].replace (/{$/, '() {'));
-	return query;
+	if (content.match (/query[^\{]*\{\s*\w+\s*\{/gi)) {
+		return content.replace (queries [0], queries [0].replace (/{$/, data.pagination ? '() {' : ' {'));
+	}
+	return content;
 }
 
 
