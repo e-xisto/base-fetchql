@@ -125,7 +125,7 @@ function importConfig (configFile: string): Promise <Config> {
 			if (! config.paths.output) throw new Error (`No existe el parámetro paths.output en el fichero de configuración ${ join (rootPath, '/fetchql.config.js') }`);
 			return resolve (config);
 		})
-		.catch ((err: any) => reject (err) );
+		.catch ((err: any) => reject (err));
 	});
 }
 
@@ -264,7 +264,7 @@ async function runQuery (config: Config, queryFile: string) {
 
 		const query    = await getQuery (config, queryFile);
 		const dataName = queryFile.replace ('.gql', '');
-		let index = 0;
+		let conDatos   = false;
 
 		const stream = createWriteStream (join (config.rootPath, config.paths.output, dataName + '.json'));
 		const log    = config.server.debug ? createWriteStream (join (config.rootPath, config.paths.output, dataName + '.log')) : undefined;
@@ -275,8 +275,8 @@ async function runQuery (config: Config, queryFile: string) {
 
 		if (valores.length) {
 			for (let pars of valores) {
-				if (index++) stream.write (",\n");
-				await runQueryParameters (stream, config, dataName, query, pars, variables, log);
+				if (conDatos) stream.write (",\n");
+				conDatos = await runQueryParameters (stream, config, dataName, query, pars, variables, log);
 			}
 		} else await runQueryParameters (stream, config, dataName, query, {}, variables, log);
 
@@ -297,6 +297,7 @@ async function runQueryParameters (
 ) {
 	let page      = 1;
 	let iteration = 0;
+	let conDatos  = false;
 	const headers: any = {};
 
 	if (config.server.token) headers ['Authorization'] = `Bearer ${ config.server.token }`;
@@ -325,11 +326,11 @@ async function runQueryParameters (
 					console.error (body.errors);
 					break;
 				}
-
 				// De momento solo una consulta
 				const key = Object.keys (body.data) [0];
 				if (! Array.isArray (body.data [key])) body.data [key] = [ body.data [key]]
 				if (body.data [key].length) {
+					conDatos = true;
 					await mapItemsQuery (stream, config?.queries?.[dataName], query, pars, body, iteration++);
 					if (lastPage == -1) break;
 					page = ++lastPage;
@@ -341,6 +342,7 @@ async function runQueryParameters (
 			break;
 		}
 	}
+	return conDatos;
 }
 
 

@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+[0.2.9] - 2024-06-27
+
+- Error cuando una query es por locale y está vacia
+
 [0.2.8] - 2024-01-15
 
 - Error en colección contenido cuando no tiene parametros
