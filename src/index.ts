@@ -33,10 +33,12 @@ const fetchQL = async (configFile: string, queries: Array <string> | undefined) 
 			);
 		} catch (err: any) { //ErrnoException
 			showErrors (err, config);
+			process.exit (1);
 		}
 	} catch (err: any) { // ErrnoException)
 		if (err.message) console.error (`\x1b[35m${ err.message }\x1b[0m\n`);
 		else console.error (err);
+		process.exit(1);
 	}
 }
 
@@ -273,6 +275,7 @@ async function runQuery (config: Config, queryFile: string) {
 		const variables = queryVariables (config, query.content);
 		const valores = combinaciones (variables);
 
+
 		if (valores.length) {
 			for (let pars of valores) {
 				if (conDatos) stream.write (",\n");
@@ -324,7 +327,8 @@ async function runQueryParameters (
 				const body = JSON.parse (data.body);
 				if (body.errors) {
 					console.error (body.errors);
-					break;
+					// Abortamos si hay errores;
+					process.exit (1);
 				}
 				// De momento solo una consulta
 				const key = Object.keys (body.data) [0];

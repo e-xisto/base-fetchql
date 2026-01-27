@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+[0.3.0] - 2026-01-27
+
+- Abortamos con codigo 1 si hay errores
+
 [0.2.9] - 2024-06-27
 
 - Error cuando una query es por locale y está vacia
